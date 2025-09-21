@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pahlawan Ekonomi - Edisi Teka-Teki</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display-swap" rel="stylesheet">
+    <style>
+        html, body { height: 100%; width: 100%; overflow-x: hidden; }
+        body { font-family: 'Inter', sans-serif; background: #f0f4f8; padding-top: 40px; /* Jarak untuk marquee */ }
+        .screen {
+            position: fixed; width: 100%; height: 100%; top: 0; left: 0;
+            display: none; flex-direction: column; align-items: center; justify-content: center;
+            padding: 1rem; opacity: 0; transition: opacity 0.5s ease-in-out; overflow-y: auto;
+        }
+        .screen.active { display: flex; opacity: 1; }
+        .btn { @apply w-full px-4 py-3 text-lg font-semibold text-white rounded-xl shadow-lg transition-all transform duration-300 ease-in-out focus:outline-none focus:ring-4; }
+        .btn-primary { @apply bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 focus:ring-indigo-300; }
+        .btn-green { @apply bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 focus:ring-green-300; }
+        .btn-secondary { @apply bg-gray-500 hover:bg-gray-600 focus:ring-gray-300; }
+        .btn:hover { transform: translateY(-4px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); }
+        .card {
+            @apply bg-white p-6 rounded-2xl shadow-2xl border-2 border-indigo-200 w-full max-w-md my-auto;
+            animation: fadeInScaleUp 0.6s ease-out forwards;
+        }
+        @keyframes fadeInScaleUp { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
+        #slide-container .slide { display: none; }
+        #slide-container .slide.active { display: block; }
+        .slide-content h3 { @apply text-2xl font-bold text-indigo-700 mb-4; }
+        .slide-content ul { @apply list-disc list-inside space-y-2; }
+        #crossword-grid { display: grid; gap: 2px; }
+        .grid-cell { width: 100%; padding-bottom: 100%; position: relative; background-color: #e2e8f0; border-radius: 4px;}
+        .grid-cell.active { background-color: white; }
+        .grid-cell .number-label { position: absolute; top: 1px; left: 2px; font-size: 0.6rem; line-height: 1; font-weight: 700; color: #4a5568; z-index: 10; }
+        .grid-cell input { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 1px solid #cbd5e1; border-radius: 4px; text-align: center; font-size: 1rem; font-weight: 600; text-transform: uppercase; padding: 0; }
+        .grid-cell input:focus { outline: none; border: 2px solid #4f46e5; background-color: #eef2ff; }
+        .grid-cell input.correct { background-color: #dcfce7; border-color: #22c55e; color: #166534; }
+        .grid-cell input.incorrect { background-color: #fee2e2; border-color: #ef4444; color: #991b1b; }
+        .feedback-message { @apply mt-4 text-center font-semibold text-lg; }
+        .feedback-success { @apply text-green-600; }
+        .feedback-error { @apply text-red-600; }
+        #crossword-screen .card { display: flex; flex-direction: column; height: 100%; max-height: 95vh; }
+        #crossword-screen h2, #crossword-screen .flex.gap-4, #feedback-message { flex-shrink: 0; }
+        #crossword-layout-container { flex-grow: 1; overflow-y: auto; min-height: 0; padding: 4px; }
+        .spinner { width: 56px; height: 56px; border-radius: 50%; border: 8px solid #e5e7eb; border-top-color: #4f46e5; animation: spin 1s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        
+        /* Marquee (Absen Berjalan) Styles */
+        #absensi-marquee-container {
+            position: fixed; top: 0; left: 0; width: 100%;
+            background-color: #1f2937; /* Dark Gray */
+            color: white;
+            padding: 8px 0;
+            overflow: hidden;
+            white-space: nowrap;
+            z-index: 9999;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+        #absensi-marquee-text {
+            display: inline-block;
+            padding-left: 100%;
+            animation: marquee 30s linear infinite;
+        }
+        #absensi-marquee-text:empty::before {
+            content: "Belum ada yang hadir. Jadilah yang pertama!";
+        }
+        @keyframes marquee {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-100%); }
+        }
+
+        @media (min-width: 768px) {
+             #crossword-screen .card { max-width: 60rem; }
+             #crossword-layout-container { display: flex; gap: 1.5rem; align-items: flex-start; }
+             #crossword-grid-wrapper { flex: 0 0 55%; }
+             #clues-wrapper { flex: 1 1 45%; margin-top: 0; }
+             #clues-wrapper #clues-container { grid-template-columns: repeat(1, 1fr); }
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-purple-50 to-indigo-100">
+
+    <!-- Absensi Berjalan (Marquee) -->
+    <div id="absensi-marquee-container">
+        <div id="absensi-marquee-text"></div>
+    </div>
+
+    <!-- Layar Loading Awal -->
+    <div id="loading-screen" class="screen active">
+        <div class="spinner"></div>
+        <p class="mt-4 text-lg font-semibold text-gray-600">Menyiapkan sesi...</p>
+    </div>
+    
+    <!-- Layar Mulai (dengan Absensi) -->
+    <div id="start-screen" class="screen">
+        <div class="card text-center">
+            <h1 class="text-5xl font-extrabold mb-3 bg-clip-text text-transparent bg-gradient-to-r from-violet-600 to-indigo-600">Pahlawan Ekonomi</h1>
+            <p class="text-xl text-gray-600 mb-6 font-semibold">Edisi Teka-Teki</p>
+            
+            <!-- MODUL ABSENSI (Form Input) -->
+            <div id="absensi-container" class="mb-8 p-4 border-t border-b border-gray-200">
+                <h3 class="text-lg font-bold text-indigo-700 mb-3">Absensi</h3>
+                <div id="absen-form" class="flex flex-col gap-2">
+                    <input type="text" id="nama-input" placeholder="Ketik nama lengkap Anda..." class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                    <button id="absen-btn" class="w-full px-4 py-2 text-md font-semibold text-white bg-green-600 rounded-lg hover:bg-green-700 transition-colors">Hadir</button>
+                </div>
+            </div>
+
+            <button id="start-game-btn" class="btn btn-primary">Mulai Belajar</button>
+            <div class="mt-4 text-xs text-gray-400">
+                ID Pengguna: <span id="user-id-display" class="font-mono">...</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Layar Materi Slide (HTML tidak berubah) -->
+    <div id="slide-screen" class="screen">
+        <div class="card">
+            <div id="slide-container">
+                 <div class="slide slide-content" data-slide="1"><h3>1. Memahami Konsep Pengangguran</h3><p><strong>Pengangguran</strong> adalah orang dalam angkatan kerja yang aktif mencari pekerjaan, tapi belum mendapatkannya.</p><ul class="text-sm"><li><strong>Tenaga Kerja:</strong> Penduduk usia kerja (15+ tahun).</li><li><strong>Angkatan Kerja:</strong> Yang sedang bekerja atau aktif mencari kerja.</li><li><strong>Bukan Angkatan Kerja:</strong> Pelajar, mahasiswa, ibu rumah tangga, pensiunan.</li></ul><div class="mt-6 pt-4 border-t border-indigo-200"><h4 class="font-semibold text-indigo-600 mb-2">Pertanyaan Pemantik:</h4><ul class="text-sm list-disc list-inside space-y-1 text-gray-600"><li>Apa saja upaya mengatasi pengangguran?</li><li>Apakah investasi dapat mengatasi pengangguran?</li><li>Apa dampak pemberian pelatihan tenaga kerja dalam upaya mengatasi pengangguran?</li></ul></div></div>
+                <div class="slide slide-content" data-slide="2"><h3>2. Jenis Berdasarkan Waktu Kerja</h3><ul><li><strong>Terbuka:</strong> Sama sekali tidak punya pekerjaan.</li><li><strong>Setengah Menganggur:</strong> Jam kerja sangat sedikit (&lt;35 jam/minggu).</li><li><strong>Terselubung:</strong> Terlalu banyak pekerja untuk satu tugas, jadi tidak produktif.</li></ul></div>
+                <div class="slide slide-content" data-slide="3"><h3>3. Jenis Berdasarkan Penyebab (Bag. 1)</h3><ul><li><strong>Friksional:</strong> Sementara, karena sedang pindah ke pekerjaan yang lebih baik.</li><li><strong>Struktural:</strong> Karena perubahan struktur ekonomi, skill pekerja tidak cocok lagi.</li></ul></div>
+                <div class="slide slide-content" data-slide="4"><h3>4. Jenis Berdasarkan Penyebab (Bag. 2)</h3><ul><li><strong>Siklikal (Konjungtur):</strong> Terjadi karena ekonomi lesu (resesi), perusahaan terpaksa PHK.</li><li><strong>Musiman:</strong> Terjadi berkala, contohnya petani setelah musim panen.</li></ul></div>
+                <div class="slide slide-content" data-slide="5"><h3>5. Upaya Mengatasi (Bag. 1)</h3><ul><li><strong>Struktural:</strong> Adakan pelatihan kerja (vokasi), kembangkan industri padat karya.</li><li><strong>Siklikal:</strong> Pemerintah tingkatkan belanja, Bank Indonesia turunkan suku bunga.</li></ul></div>
+                <div class="slide slide-content" data-slide="6"><h3>6. Upaya Mengatasi (Bag. 2)</h3><ul><li><strong>Friksional:</strong> Sediakan info lowongan kerja yang mudah diakses (job fair, web).</li><li><strong>Musiman:</strong> Beri pelatihan keterampilan lain di luar musim (misal: kerajinan).</li></ul><p class="mt-4">Secara umum: <strong>dorong wirausaha</strong> untuk ciptakan lapangan kerja baru!</p></div>
+            </div>
+            <div class="flex justify-between items-center mt-6">
+                <button id="prev-slide-btn" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors">&lt; Kembali</button>
+                <span id="slide-counter" class="text-sm font-semibold text-gray-500">1 / 6</span>
+                <button id="next-slide-btn" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">Lanjut &gt;</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Layar Teka-Teki Silang (HTML tidak berubah) -->
+    <div id="crossword-screen" class="screen">
+        <div class="card w-full max-w-md md:max-w-4xl">
+            <h2 class="text-3xl font-bold mb-4 text-indigo-700 text-center">Teka-Teki Pengangguran</h2>
+            <div id="crossword-layout-container">
+                <div id="crossword-grid-wrapper"><div id="crossword-grid"></div></div>
+                <div id="clues-wrapper" class="mt-4">
+                    <div id="clues-container" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div><h3 class="font-bold text-indigo-800">Menurun</h3><ul id="clues-down" class="text-sm space-y-1"></ul></div>
+                        <div><h3 class="font-bold text-indigo-800">Mendatar</h3><ul id="clues-across" class="text-sm space-y-1"></ul></div>
+                    </div>
+                </div>
+            </div>
+            <div class="flex gap-4 mt-6">
+                <button id="back-to-menu-btn" class="btn btn-secondary">Kembali</button>
+                <button id="check-crossword-btn" class="btn btn-primary">Submit Jawaban</button>
+            </div>
+            <div id="feedback-message" class="feedback-message"></div>
+        </div>
+    </div>
+
+<script type="module">
+    // Impor fungsi-fungsi yang dibutuhkan dari Firebase SDK
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getFirestore, collection, addDoc, onSnapshot, doc, getDoc, setDoc, serverTimestamp, query, orderBy } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+    // Variabel global untuk Firebase dan state aplikasi
+    let app, db, auth, userId;
+    let crosswordState = {};
+
+    // === Variabel Konfigurasi (WAJIB ADA) ===
+    const appId = typeof __app_id !== 'undefined' ? __app_id : 'pahlawan-ekonomi-app';
+    const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : { /* GANTI DENGAN KONFIGURASI FIREBASE ANDA */ };
+
+    // === Elemen DOM ===
+    const screens = document.querySelectorAll('.screen');
+    const startGameBtn = document.getElementById('start-game-btn');
+    const checkCrosswordBtn = document.getElementById('check-crossword-btn');
+    const backToMenuBtn = document.getElementById('back-to-menu-btn');
+    const feedbackMessage = document.getElementById('feedback-message');
+    const userIdDisplay = document.getElementById('user-id-display');
+    const namaInput = document.getElementById('nama-input');
+    const absenBtn = document.getElementById('absen-btn');
+    const absensiMarqueeText = document.getElementById('absensi-marquee-text');
+
+    const slides = document.querySelectorAll('.slide');
+    const nextSlideBtn = document.getElementById('next-slide-btn');
+    const prevSlideBtn = document.getElementById('prev-slide-btn');
+    const slideCounter = document.getElementById('slide-counter');
+    let currentSlide = 1;
+    const totalSlides = slides.length;
+
+    async function main() {
+        app = initializeApp(firebaseConfig);
+        db = getFirestore(app);
+        auth = getAuth(app);
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                userId = user.uid;
+                userIdDisplay.textContent = userId;
+                await loadCrosswordProgress();
+                listenToAbsensi();
+                document.getElementById('loading-screen').classList.remove('active');
+                showScreen('start-screen');
+            } else {
+                try {
+                    await signInAnonymously(auth);
+                } catch (error) {
+                    console.error("Gagal login anonim:", error);
+                    document.getElementById('loading-screen').innerHTML = '<p class="text-red-500">Gagal terhubung. Coba refresh halaman.</p>';
+                }
+            }
+        });
+    }
+
+    function showScreen(screenId) {
+        screens.forEach(screen => screen.classList.remove('active'));
+        document.getElementById(screenId).classList.add('active');
+    }
+
+    function listenToAbsensi() {
+        const absensiRef = collection(db, `artifacts/${appId}/public/data/absensi`);
+        const q = query(absensiRef, orderBy("timestamp", "desc"));
+        onSnapshot(q, (snapshot) => {
+            const absensiData = [];
+            snapshot.forEach(doc => absensiData.push(doc.data()));
+            
+            const marqueeText = absensiData.map(data => `✅ ${data.nama}`).join(' &nbsp; • &nbsp; ');
+            absensiMarqueeText.innerHTML = marqueeText;
+        });
+    }
+
+    async function handleAbsen() {
+        const nama = namaInput.value.trim();
+        if (!nama) { alert("Nama tidak boleh kosong!"); return; }
+        try {
+            const absensiRef = collection(db, `artifacts/${appId}/public/data/absensi`);
+            await addDoc(absensiRef, { userId: userId, nama: nama, timestamp: serverTimestamp() });
+            namaInput.disabled = true;
+            absenBtn.disabled = true;
+            absenBtn.textContent = 'Sudah Absen';
+            absenBtn.classList.add('bg-gray-400');
+        } catch (error) {
+            console.error("Gagal menyimpan absensi:", error);
+            alert("Gagal menyimpan absensi. Coba lagi.");
+        }
+    }
+
+    async function saveCrosswordState() {
+        const inputs = document.querySelectorAll('#crossword-grid input');
+        const currentState = {};
+        inputs.forEach((input, index) => { if (input.value) currentState[index] = input.value; });
+
+        if (Object.keys(currentState).length > 0) {
+            try {
+                const progressRef = doc(db, `artifacts/${appId}/users/${userId}/progress/crossword`);
+                await setDoc(progressRef, { answers: currentState, lastUpdate: serverTimestamp() });
+            } catch (error) { console.error("Gagal menyimpan progres:", error); }
+        }
+    }
+
+    async function loadCrosswordProgress() {
+        try {
+            const progressRef = doc(db, `artifacts/${appId}/users/${userId}/progress/crossword`);
+            const docSnap = await getDoc(progressRef);
+            crosswordState = docSnap.exists() ? (docSnap.data().answers || {}) : {};
+        } catch (error) { console.error("Gagal memuat progres:", error); crosswordState = {}; }
+    }
+    
+    function updateSlide() {
+        slides.forEach(slide => slide.classList.remove('active'));
+        document.querySelector(`.slide[data-slide="${currentSlide}"]`).classList.add('active');
+        slideCounter.textContent = `${currentSlide} / ${totalSlides}`;
+        prevSlideBtn.disabled = currentSlide === 1;
+        prevSlideBtn.style.opacity = currentSlide === 1 ? '0.5' : '1';
+        if (currentSlide === totalSlides) {
+            nextSlideBtn.textContent = 'Mulai Teka-Teki!';
+            nextSlideBtn.classList.add('btn-green');
+        } else {
+            nextSlideBtn.textContent = 'Lanjut >';
+            nextSlideBtn.classList.remove('btn-green');
+        }
+    }
+    
+    const crosswordData = [ { answer: "VOKASI", row: 1, col: 1, dir: "down", clue: "Pelatihan kejuruan untuk siapkan tenaga kerja." }, { answer: "STRUKTURAL", row: 1, col: 7, dir: "down", clue: "Pengangguran akibat perubahan struktur ekonomi." }, { answer: "TENAGA", row: 1, col: 12, dir: "down", clue: "... kerja, yaitu penduduk dalam usia produktif." }, { answer: "SIKLIKAL", row: 3, col: 9, dir: "down", clue: "Terjadi karena kemunduran ekonomi atau resesi." }, { answer: "KEBIJAKAN", row: 4, col: 3, dir: "down", clue: "Upaya atau aturan yang dibuat pemerintah." }, { answer: "ANGKATAN", row: 6, col: 11, dir: "down", clue: "... kerja, yaitu yang bekerja atau mencari kerja." }, { answer: "PHK", row: 11, col: 1, dir: "down", clue: "Singkatan dari Pemutusan Hubungan Kerja." }, { answer: "INVESTASI", row: 11, col: 5, dir: "down", clue: "Penanaman modal untuk membuka lapangan kerja baru." }, { answer: "FRIKSIONAL", row: 3, col: 1, dir: "across", clue: "Sifatnya sementara, karena sedang pindah kerja." }, { answer: "TERBUKA", row: 6, col: 6, dir: "across", clue: "Sama sekali tidak memiliki pekerjaan." }, { answer: "INDUSTRI", row: 8, col: 1, dir: "across", clue: "Sektor padat karya yang menyerap banyak pekerja." }, { answer: "WIRAUSAHA", row: 11, col: 7, dir: "across", clue: "Kegiatan mandiri untuk menciptakan lapangan kerja." }, { answer: "RECESI", row: 13, col: 3, dir: "across", clue: "Kondisi ekonomi lesu, penyebab pengangguran siklikal." }, { answer: "MUSIMAN", row: 15, col: 1, dir: "across", clue: "Terjadi berkala, contohnya pada sektor pertanian." }, { answer: "TERSELUBUNG", row: 17, col: 2, dir: "across", clue: "Kelebihan tenaga kerja sehingga tidak produktif." }, ];
+    
+    function initCrossword() {
+        const grid = document.getElementById('crossword-grid');
+        const cluesAcross = document.getElementById('clues-across');
+        const cluesDown = document.getElementById('clues-down');
+        grid.innerHTML = ''; cluesAcross.innerHTML = ''; cluesDown.innerHTML = '';
+        feedbackMessage.textContent = ''; feedbackMessage.className = 'feedback-message';
+        let minRow = Infinity, maxRow = -Infinity, minCol = Infinity, maxCol = -Infinity;
+        crosswordData.forEach(word => {
+            let r = word.row, c = word.col; minRow = Math.min(minRow, r); minCol = Math.min(minCol, c);
+            if (word.dir === 'across') { maxCol = Math.max(maxCol, c + word.answer.length - 1); maxRow = Math.max(maxRow, r); } 
+            else { maxRow = Math.max(maxRow, r + word.answer.length - 1); maxCol = Math.max(maxCol, c); }
+        });
+        const gridHeight = maxRow - minRow + 1, gridWidth = maxCol - minCol + 1;
+        grid.style.gridTemplateColumns = `repeat(${gridWidth}, minmax(0, 1fr))`;
+        let gridMap = Array(gridHeight * gridWidth).fill(null).map(() => ({})); const startCoords = {};
+        crosswordData.forEach(word => { const key = `${word.row},${word.col}`; if (!startCoords[key]) startCoords[key] = { row: word.row, col: word.col }; for (let i = 0; i < word.answer.length; i++) { let r = word.row, c = word.col; if (word.dir === 'across') c += i; else r += i; gridMap[(r - minRow) * gridWidth + (c - minCol)].char = word.answer[i]; } });
+        const sortedCoords = Object.values(startCoords).sort((a, b) => (a.row !== b.row) ? a.row - b.row : a.col - b.col); const numberMap = {}; sortedCoords.forEach((coord, index) => numberMap[`${coord.row},${coord.col}`] = index + 1);
+        crosswordData.forEach(word => { const clueNumber = numberMap[`${word.row},${word.col}`]; const li = document.createElement('li'); li.innerHTML = `<span class="font-bold mr-1">${clueNumber}.</span> ${word.clue}`; if (word.dir === 'across') cluesAcross.appendChild(li); else cluesDown.appendChild(li); gridMap[(word.row - minRow) * gridWidth + (word.col - minCol)].startNumber = clueNumber; });
+        for (let i = 0; i < gridHeight * gridWidth; i++) { const cell = document.createElement('div'); cell.classList.add('grid-cell'); if (gridMap[i].char) { cell.classList.add('active'); if (gridMap[i].startNumber) { const numberLabel = document.createElement('span'); numberLabel.textContent = gridMap[i].startNumber; numberLabel.classList.add('number-label'); cell.appendChild(numberLabel); } const input = document.createElement('input'); input.type = 'text'; input.maxLength = 1; input.dataset.answer = gridMap[i].char; cell.appendChild(input); } grid.appendChild(cell); }
+        const newInputs = grid.querySelectorAll('input');
+        newInputs.forEach((input, index) => { if (crosswordState[index]) input.value = crosswordState[index]; });
+        showScreen('crossword-screen');
+    }
+
+    function checkCrossword() {
+        const inputs = document.querySelectorAll('#crossword-grid input'); let allCorrect = true; feedbackMessage.textContent = ''; feedbackMessage.className = 'feedback-message';
+        inputs.forEach(input => { input.classList.remove('correct', 'incorrect'); if (input.value.toUpperCase() === input.dataset.answer) input.classList.add('correct'); else { input.classList.add('incorrect'); allCorrect = false; } });
+        if (allCorrect) { feedbackMessage.textContent = 'Selamat! Kamu berhasil menyelesaikan semua teka-teki!'; feedbackMessage.classList.add('feedback-success');
+        } else { feedbackMessage.textContent = 'Beberapa jawaban masih kurang tepat. Coba lagi!'; feedbackMessage.classList.add('feedback-error'); }
+    }
+
+    startGameBtn.addEventListener('click', () => { currentSlide = 1; updateSlide(); showScreen('slide-screen'); });
+    nextSlideBtn.addEventListener('click', () => { if (currentSlide < totalSlides) { currentSlide++; updateSlide(); } else { initCrossword(); } });
+    prevSlideBtn.addEventListener('click', () => { if (currentSlide > 1) { currentSlide--; updateSlide(); } });
+    checkCrosswordBtn.addEventListener('click', checkCrossword);
+    absenBtn.addEventListener('click', handleAbsen);
+    backToMenuBtn.addEventListener('click', async () => { await saveCrosswordState(); showScreen('slide-screen'); });
+    main();
+</script>
+</body>
+</html>
