@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Eksplorasi Isu Pengangguran | Platform Edukasi Interaktif</title>
+    <title>Pengangguran</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -80,68 +80,56 @@
             100% { transform: translateX(-100%); }
         }
 
-        /* Styling untuk Teka Teki Silang */
-        #crossword-grid {
-            display: grid;
-            grid-template-columns: repeat(15, minmax(0, 1fr));
-            gap: 2px;
+        /* Styling untuk Game Susun Kata */
+        #scrambled-word-container {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
         }
-        /* Style untuk div pembungkus, yang merupakan sel grid */
-        .crossword-cell {
-            position: relative;
-            width: 100%;
-            aspect-ratio: 1 / 1;
-            border-radius: 4px;
+        .letter-box {
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             background-color: #1e293b;
-            border: 1px solid #334155;
-            transition: background-color 0.3s, border-color 0.3s;
-        }
-        .crossword-cell.empty {
-            background-color: transparent;
-            border: none;
-        }
-        .crossword-cell:focus-within {
-            border-color: #5eead4;
-            background-color: #334155;
-        }
-        .crossword-cell.correct {
-            background-color: #166534; /* Green-700 */
-        }
-        .crossword-cell.incorrect {
-            background-color: #991b1b; /* Red-700 */
-        }
-        /* Style untuk elemen input di dalam sel */
-        .crossword-input {
-            width: 100%;
-            height: 100%;
-            background: transparent;
-            text-align: center;
-            font-size: 1.25rem;
+            border: 2px solid #334155;
+            border-radius: 8px;
+            font-size: 2rem;
             font-weight: bold;
-            text-transform: uppercase;
             color: white;
-            padding: 0;
-            border: none;
-            border-radius: 4px;
+            text-transform: uppercase;
+            transition: transform 0.2s ease-in-out;
         }
-        .crossword-input:focus {
-            outline: none;
+        .correct-answer-animation {
+            animation: tada 1s ease;
         }
-        .clue-number {
-            position: absolute;
-            top: 1px;
-            left: 2px;
-            font-size: 0.6rem;
-            font-weight: bold;
-            color: #94a3b8;
+        @keyframes tada {
+            from { transform: scale3d(1, 1, 1); }
+            10%, 20% { transform: scale3d(.9, .9, .9) rotate3d(0, 0, 1, -3deg); }
+            30%, 50%, 70%, 90% { transform: scale3d(1.1, 1.1, 1.1) rotate3d(0, 0, 1, 3deg); }
+            40%, 60%, 80% { transform: scale3d(1.1, 1.1, 1.1) rotate3d(0, 0, 1, -3deg); }
+            to { transform: scale3d(1, 1, 1); }
         }
+        .incorrect-answer-animation {
+            animation: shake 0.5s ease;
+        }
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-1px, 0, 0); }
+            20%, 80% { transform: translate3d(2px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+            40%, 60% { transform: translate3d(4px, 0, 0); }
+        }
+
     </style>
 </head>
 <body class="bg-gray-900 text-slate-200">
 
     <!-- Hero Section -->
     <section class="min-h-screen flex flex-col items-center justify-center p-6 text-center gradient-bg reveal visible">
-        <h1 class="text-5xl md:text-7xl font-extrabold text-white mb-4 animate-fade-in-down" style="animation: fadeInDown 1s ease-out;">Membedah Isu Pengangguran</h1>
+        <h1 class="text-5xl md:text-7xl font-extrabold text-white mb-4 animate-fade-in-down" style="animation: fadeInDown 1s ease-out;">Pengangguran</h1>
         <p class="text-lg md:text-xl text-slate-300 max-w-3xl mb-8" style="animation: fadeInUp 1s ease-out 0.5s; animation-fill-mode: backwards;">Sebuah perjalanan interaktif untuk memahami konsep, jenis, dan solusi dari salah satu tantangan ekonomi terbesar di dunia.</p>
         <form id="attendance-form" class="mt-8 flex flex-col sm:flex-row gap-4 max-w-md mx-auto w-full reveal" style="animation-delay: 0.8s;">
             <input type="text" id="name-input" placeholder="Ketik nama Anda di sini..." class="w-full px-5 py-3 rounded-full bg-white/20 text-white placeholder-slate-300 focus:outline-none focus:ring-2 focus:ring-teal-400 backdrop-blur-sm" required>
@@ -269,32 +257,27 @@
             </div>
         </section>
 
-        <!-- Game Teka Teki Silang -->
+        <!-- Game Susun Kata -->
         <section id="game" class="reveal">
             <h2 class="text-4xl font-bold text-center mb-4 text-teal-300">Uji Pemahaman Anda!</h2>
-            <p class="text-center text-slate-400 mb-12 max-w-2xl mx-auto">Selesaikan teka-teki silang di bawah ini berdasarkan materi yang telah Anda pelajari.</p>
+            <p class="text-center text-slate-400 mb-12 max-w-2xl mx-auto">Susun huruf-huruf acak di bawah ini menjadi sebuah kata yang benar berdasarkan petunjuk.</p>
             
-            <div class="bg-gray-800 p-8 rounded-xl shadow-2xl">
-                <div class="flex flex-col lg:flex-row gap-8">
-                    <!-- Grid TTS -->
-                    <div class="w-full lg:w-1/2">
-                        <div id="crossword-grid" class="mx-auto" style="max-width: 500px;"></div>
-                    </div>
-                    <!-- Petunjuk TTS -->
-                    <div class="w-full lg:w-1/2 text-sm">
-                        <div>
-                            <h3 class="text-xl font-bold text-teal-400 mb-3">MENDATAR</h3>
-                            <ul id="across-clues" class="space-y-2 text-slate-300"></ul>
-                        </div>
-                        <div class="mt-6">
-                            <h3 class="text-xl font-bold text-teal-400 mb-3">MENURUN</h3>
-                            <ul id="down-clues" class="space-y-2 text-slate-300"></ul>
-                        </div>
-                    </div>
+            <div class="bg-gray-800 p-8 rounded-xl shadow-2xl max-w-3xl mx-auto">
+                <div id="game-container" class="text-center">
+                    <p id="game-progress" class="font-bold text-teal-400 mb-4 text-lg"></p>
+                    <p id="clue-text" class="text-slate-300 text-xl mb-6 h-12"></p>
+                    <div id="scrambled-word-container"></div>
+                    <form id="answer-form" class="flex flex-col sm:flex-row gap-4 max-w-md mx-auto w-full">
+                        <input type="text" id="answer-input" placeholder="Ketik jawaban Anda..." class="w-full text-center px-5 py-3 rounded-full bg-gray-700 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-400" required autocomplete="off">
+                        <button type="submit" class="bg-teal-500 text-gray-900 font-bold py-3 px-6 rounded-full text-lg hover:bg-teal-400 transition-all duration-300 btn-pulse whitespace-nowrap">
+                            Periksa
+                        </button>
+                    </form>
+                    <p id="game-feedback" class="mt-6 font-semibold text-lg h-6"></p>
                 </div>
-                 <div class="text-center mt-8">
-                    <button id="check-answers-btn" class="bg-teal-500 text-gray-900 font-bold py-3 px-8 rounded-full text-lg hover:bg-teal-400 transition-all duration-300 btn-pulse">Periksa Jawaban</button>
-                    <p id="game-feedback" class="mt-4 font-semibold"></p>
+                <div id="game-over-container" class="text-center" style="display: none;">
+                    <h3 class="text-3xl font-bold text-green-400 mb-4">Permainan Selesai!</h3>
+                    <p id="final-score" class="text-xl text-slate-300"></p>
                 </div>
             </div>
         </section>
@@ -365,6 +348,7 @@
                 listenForAttendanceChanges();
                 setupAttendanceForm();
                 setupEndSessionButton();
+                initializeWordScrambleGame();
 
             } catch (error) {
                 console.error("Firebase initialization failed:", error);
@@ -495,158 +479,116 @@
             observer.observe(el);
         });
         
-        // --- LOGIKA TEKA TEKI SILANG (TTS) ---
-        const crosswordData = {
-            gridSize: 15,
-            words: [
-                { answer: "STRUKTURAL", clue: "Pengangguran karena ketidakcocokan skill (mendatar)", row: 1, col: 0, direction: "across" },
-                { answer: "MUSIMAN", clue: "Bergantung pada musim (mendatar)", row: 5, col: 7, direction: "across" },
-                { answer: "WIRAUSAHA", clue: "Menciptakan lapangan kerja sendiri (mendatar)", row: 8, col: 0, direction: "across" },
-                { answer: "SIKLIKAL", clue: "Akibat resesi ekonomi (mendatar)", row: 11, col: 4, direction: "across" },
-                { answer: "TERBUKA", clue: "Sama sekali tidak punya pekerjaan (menurun)", row: 0, col: 8, direction: "down" },
-                { answer: "FRIKSIONAL", clue: "Terjadi saat pindah kerja (menurun)", row: 1, col: 2, direction: "down" },
-                { answer: "INVESTASI", clue: "Salah satu cara menciptakan lapangan kerja (menurun)", row: 1, col: 12, direction: "down" },
-                { answer: "PENDIDIKAN", clue: "Kualitasnya perlu ditingkatkan untuk kurangi pengangguran (menurun)", row: 5, col: 5, direction: "down" },
-                { answer: "TERSELUBUNG", clue: "Produktivitas rendah/tidak sesuai keahlian (menurun)", row: 6, col: 10, direction: "down" }
-            ]
-        };
+        // --- LOGIKA GAME SUSUN KATA ---
+        function initializeWordScrambleGame() {
+            const questions = [
+                { answer: "WIRAUSAHA", clue: "Menciptakan lapangan kerja sendiri." },
+                { answer: "SIKLIKAL", clue: "Jenis pengangguran akibat resesi ekonomi." },
+                { answer: "PENDIDIKAN", clue: "Perlu ditingkatkan kualitasnya untuk mengurangi pengangguran." },
+                { answer: "MUSIMAN", clue: "Pengangguran yang bergantung pada waktu tertentu." },
+                { answer: "INVESTASI", clue: "Mendorong ini adalah salah satu cara menciptakan lapangan kerja baru." },
+                { answer: "TERBUKA", clue: "Sama sekali tidak memiliki pekerjaan dan sedang mencari." },
+                { answer: "FRIKSIONAL", clue: "Terjadi karena perpindahan atau saat mencari pekerjaan baru." },
+                { answer: "STRUKTURAL", clue: "Ketidakcocokan skill pekerja dengan kebutuhan industri." },
+                { answer: "TERSELUBUNG", clue: "Produktivitasnya rendah atau tidak sesuai keahlian." },
+                { answer: "PELATIHAN", clue: "Kegiatan untuk meningkatkan keahlian kerja." },
+                { answer: "MODAL", clue: "Sumber daya yang diperlukan untuk memulai wirausaha." },
+                { answer: "EKONOMI", clue: "Kondisi negara yang mempengaruhi ketersediaan pekerjaan." },
+                { answer: "PRODUKTIVITAS", clue: "Ukuran efisiensi kerja, sering rendah pada pengangguran terselubung." },
+                { answer: "KEMISKINAN", clue: "Salah satu dampak sosial negatif dari pengangguran." },
+                { answer: "PADATKARYA", clue: "Proyek yang menyerap banyak tenaga kerja." },
+                { answer: "KETERAMPILAN", clue: "Sinonim dari 'skill', sangat dibutuhkan di dunia kerja." },
+                { answer: "KEBIJAKAN", clue: "Aturan yang dibuat pemerintah untuk mengatasi masalah ekonomi." },
+                { answer: "LOWONGAN", clue: "Informasi mengenai kesempatan kerja yang tersedia." },
+                { answer: "UPAH", clue: "Imbalan atau gaji yang diterima pekerja." },
+                { answer: "SOSIAL", clue: "Aspek kehidupan yang terdampak oleh pengangguran selain ekonomi." }
+            ];
 
-        const gridEl = document.getElementById('crossword-grid');
-        const acrossCluesEl = document.getElementById('across-clues');
-        const downCluesEl = document.getElementById('down-clues');
-        const checkBtn = document.getElementById('check-answers-btn');
-        const feedbackEl = document.getElementById('game-feedback');
-        
-        let gridState = Array(crosswordData.gridSize).fill(null).map(() => Array(crosswordData.gridSize).fill(null));
+            let currentQuestionIndex = 0;
+            let score = 0;
 
-        function generateCrossword() {
-            // Inisialisasi Clues
-            let clueNumber = 1;
-            const clueMap = {};
+            const gameProgressEl = document.getElementById('game-progress');
+            const clueTextEl = document.getElementById('clue-text');
+            const scrambledWordContainerEl = document.getElementById('scrambled-word-container');
+            const answerForm = document.getElementById('answer-form');
+            const answerInput = document.getElementById('answer-input');
+            const gameFeedbackEl = document.getElementById('game-feedback');
+            const gameOverContainer = document.getElementById('game-over-container');
+            const finalScoreEl = document.getElementById('final-score');
+            const gameContainer = document.getElementById('game-container');
             
-            const sortedWords = [...crosswordData.words].sort((a,b) => (a.row * 100 + a.col) - (b.row * 100 + b.col));
-
-            sortedWords.forEach(word => {
-                const { answer, clue, row, col, direction } = word;
-                if (!clueMap[`${row},${col}`]) {
-                    clueMap[`${row},${col}`] = clueNumber++;
-                }
-                const currentClueNumber = clueMap[`${row},${col}`];
-
-                const li = document.createElement('li');
-                li.innerHTML = `<span class="font-bold">${currentClueNumber}.</span> ${clue}`;
-                if (direction === 'across') {
-                    acrossCluesEl.appendChild(li);
-                } else {
-                    downCluesEl.appendChild(li);
-                }
-                
-                for (let i = 0; i < answer.length; i++) {
-                    let r = row;
-                    let c = col;
-                    if (direction === 'across') c += i;
-                    else r += i;
-                    
-                    if (!gridState[r][c]) {
-                        gridState[r][c] = {};
-                    }
-                    gridState[r][c].correctLetter = answer[i];
-                }
-            });
-
-            // Render Grid
-            for (let r = 0; r < crosswordData.gridSize; r++) {
-                for (let c = 0; c < crosswordData.gridSize; c++) {
-                    const cellData = gridState[r][c];
-                    const cellWrapper = document.createElement('div');
-                    
-                    if (cellData) {
-                        cellWrapper.className = 'crossword-cell';
-                        
-                        const input = document.createElement('input');
-                        input.type = 'text';
-                        input.maxLength = 1;
-                        input.className = 'crossword-input';
-                        input.dataset.row = r;
-                        input.dataset.col = c;
-                        
-                        if (clueMap[`${r},${c}`]) {
-                            const numberEl = document.createElement('span');
-                            numberEl.className = 'clue-number';
-                            numberEl.textContent = clueMap[`${r},${c}`];
-                            cellWrapper.appendChild(numberEl);
-                        }
-
-                        cellWrapper.appendChild(input);
-                        gridState[r][c].element = input;
-                        gridState[r][c].wrapper = cellWrapper; // Simpan referensi ke pembungkus
-                    } else {
-                        cellWrapper.className = 'crossword-cell empty';
-                    }
-                    gridEl.appendChild(cellWrapper);
-                }
+            function scrambleWord(word) {
+                let scrambled = word.split('').sort(() => 0.5 - Math.random()).join('');
+                return (scrambled === word) ? scrambleWord(word) : scrambled;
             }
-        }
 
-        function checkAnswers() {
-            let allCorrect = true;
-            let correctWordsCount = 0;
-            
-            crosswordData.words.forEach(word => {
-                let userInput = '';
-                let isWordCorrect = true;
-                let cells = [];
-
-                for (let i = 0; i < word.answer.length; i++) {
-                    let r = word.row;
-                    let c = word.col;
-                    if (word.direction === 'across') c += i;
-                    else r += i;
-
-                    const cell = gridState[r][c];
-                    cells.push(cell);
-                    userInput += cell.element.value.toUpperCase();
+            function loadQuestion() {
+                if (currentQuestionIndex >= questions.length) {
+                    endGame();
+                    return;
                 }
 
-                if (userInput.toUpperCase() !== word.answer.toUpperCase()) {
-                    isWordCorrect = false;
-                    allCorrect = false;
-                }
-
-                cells.forEach(cell => {
-                    cell.wrapper.classList.remove('correct', 'incorrect');
-                    if(cell.element.value !== "") {
-                        if (isWordCorrect) {
-                            cell.wrapper.classList.add('correct');
-                        } else {
-                            cell.wrapper.classList.add('incorrect');
-                        }
-                    }
+                const currentQuestion = questions[currentQuestionIndex];
+                gameProgressEl.textContent = `Soal ${currentQuestionIndex + 1} dari ${questions.length}`;
+                clueTextEl.textContent = `Petunjuk: ${currentQuestion.clue}`;
+                
+                const scrambled = scrambleWord(currentQuestion.answer);
+                scrambledWordContainerEl.innerHTML = '';
+                scrambled.split('').forEach(letter => {
+                    const letterBox = document.createElement('div');
+                    letterBox.className = 'letter-box';
+                    letterBox.textContent = letter;
+                    scrambledWordContainerEl.appendChild(letterBox);
                 });
                 
-                if(isWordCorrect && userInput.length === word.answer.length) {
-                    correctWordsCount++;
-                }
-            });
-
-            if (allCorrect) {
-                feedbackEl.textContent = 'Luar Biasa! Semua jawaban benar!';
-                feedbackEl.style.color = '#34d399'; // emerald-400
-                document.getElementById('end-session-section').style.display = 'block';
-                // Scroll ke tombol akhir sesi
-                document.getElementById('end-session-section').scrollIntoView({ behavior: 'smooth' });
-            } else {
-                feedbackEl.textContent = `Anda berhasil menjawab ${correctWordsCount} dari ${crosswordData.words.length} kata dengan benar. Coba lagi!`;
-                feedbackEl.style.color = '#f87171'; // red-400
+                answerInput.value = '';
+                gameFeedbackEl.textContent = '';
+                answerInput.focus();
             }
+
+            function checkAnswer(e) {
+                e.preventDefault();
+                const userAnswer = answerInput.value.trim().toUpperCase();
+                const correctAnswer = questions[currentQuestionIndex].answer;
+                
+                if (userAnswer === correctAnswer) {
+                    score++;
+                    gameFeedbackEl.textContent = "Benar! Jawaban selanjutnya...";
+                    gameFeedbackEl.style.color = '#34d399'; // emerald-400
+                    scrambledWordContainerEl.classList.add('correct-answer-animation');
+                    
+                    setTimeout(() => {
+                        currentQuestionIndex++;
+                        scrambledWordContainerEl.classList.remove('correct-answer-animation');
+                        loadQuestion();
+                    }, 1500);
+                } else {
+                    gameFeedbackEl.textContent = "Salah, coba lagi!";
+                    gameFeedbackEl.style.color = '#f87171'; // red-400
+                    answerForm.classList.add('incorrect-answer-animation');
+                    setTimeout(() => {
+                         answerForm.classList.remove('incorrect-answer-animation');
+                    }, 500);
+                }
+            }
+            
+            function endGame() {
+                gameContainer.style.display = 'none';
+                gameOverContainer.style.display = 'block';
+                finalScoreEl.textContent = `Anda berhasil menjawab ${score} dari ${questions.length} soal dengan benar!`;
+                
+                document.getElementById('end-session-section').style.display = 'block';
+                document.getElementById('end-session-section').scrollIntoView({ behavior: 'smooth' });
+            }
+
+            answerForm.addEventListener('submit', checkAnswer);
+            
+            loadQuestion();
         }
-        
-        checkBtn.addEventListener('click', checkAnswers);
         
         // Panggil fungsi utama saat halaman dimuat
         document.addEventListener('DOMContentLoaded', () => {
             main();
-            generateCrossword();
         });
 
     </script>
