@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pengangguran</title>
+    <title>Pengangguran | Platform Edukasi Interaktif</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -315,7 +315,7 @@
         // --- KONFIGURASI ---
         // Variabel global ini akan disediakan oleh lingkungan hosting
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const firebaseConfig = {
+       const firebaseConfig = {
   apiKey: "AIzaSyDXUF2K04hhHCe0a4LnrZvVXmTrAGEM7Jg",
   authDomain: "pengangguran-1c0c6.firebaseapp.com",
   projectId: "pengangguran-1c0c6",
@@ -323,6 +323,7 @@
   messagingSenderId: "1060703579571",
   appId: "1:1060703579571:web:0a585311c8a8d06a7fefc6"
 };
+        };
         const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
 
         // --- INISIALISASI FIREBASE ---
@@ -395,21 +396,28 @@
 
         function listenForAttendanceChanges() {
             const attendeesCol = collection(db, `artifacts/${appId}/public/data/attendees`);
-            onSnapshot(attendeesCol, (snapshot) => {
-                const attendees = [];
-                snapshot.forEach((doc) => {
-                    if(doc.data().name){
-                        attendees.push(doc.data().name);
+            onSnapshot(attendeesCol, 
+                (snapshot) => { // Penangan Sukses
+                    const attendees = [];
+                    snapshot.forEach((doc) => {
+                        const data = doc.data();
+                        if (data && data.name) { // Pengecekan data lebih aman
+                            attendees.push(data.name);
+                        }
+                    });
+                    
+                    const attendeesListEl = document.getElementById('attendees-list');
+                    if (attendees.length > 0) {
+                        attendeesListEl.textContent = attendees.join(' ✨ ');
+                    } else {
+                        attendeesListEl.textContent = 'Belum ada peserta yang bergabung. Jadilah yang pertama!';
                     }
-                });
-                
-                const attendeesListEl = document.getElementById('attendees-list');
-                if (attendees.length > 0) {
-                    attendeesListEl.textContent = attendees.join(' ✨ ');
-                } else {
-                    attendeesListEl.textContent = 'Belum ada peserta yang bergabung. Jadilah yang pertama!';
+                },
+                (error) => { // Penangan Error
+                    console.error("Error listening for attendance changes:", error);
+                    document.getElementById('attendees-list').textContent = 'Gagal memuat data absensi karena kesalahan koneksi atau izin.';
                 }
-            });
+            );
         }
         
         // --- Custom Modal Logic ---
@@ -594,5 +602,6 @@
     </script>
 </body>
 </html>
+
 
 
